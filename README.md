@@ -7,6 +7,7 @@
 * Gabriel Henrique Dias - RA: 125111343625
 * Gabriel - RA:
 * Nicolas - RA:
+* Rodrigo Paiva Albuquerque - RA: 125111365272
 
 
 ## O projeto - Jogo jokenpô
