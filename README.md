@@ -9,7 +9,7 @@
 * Nicolas - RA:
 
 
-## O projeto 
+## O projeto - Jogo jokenpô
 Desenvolvemos o jogo pedra, papel e tesoura, conhecido também como "jokenpô". Este jogo deve ter somente dois jogadores e cada um escolherá um elemento (Pedra, papel ou tesoura). Nesto jogo, a pedra perde para papel (o papel embrulha a pedra); papel perde para tesoura (esta corta o primeiro); e, finalmente, a tesoura perde para a pedra, que quebra aquela.
 
 No nosso projeto, podemos jogar com outra pessoa, bem como contra a própria máquina. Para tal, o time desenvolveu uma solução java utilizando sockets para comunicação clientes (jogadores) x servidor.
