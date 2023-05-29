@@ -5,7 +5,7 @@
 ## Integrantes 
 * Adelle Bueno Dantas - RA: 125111375971
 * Gabriel Henrique Dias - RA: 125111343625
-* Gabriel - RA:
+* Gabriel Guimarães Martins - RA: 125111363302
 * Nicolas Silva Almeida - RA: 1252222895
 * Rodrigo Paiva Albuquerque - RA: 125111365272
 
