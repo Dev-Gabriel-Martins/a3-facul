@@ -3,10 +3,10 @@
 
 
 ## Integrantes 
-Adelle Bueno Dantas - RA: 125111375971
-Gabriel - RA:
-Gabriel - RA:
-Nicolas - RA:
+* Adelle Bueno Dantas - RA: 125111375971
+* Gabriel - RA:
+* Gabriel - RA:
+* Nicolas - RA:
 
 
 ## O projeto 
