@@ -12,6 +12,8 @@ public class Server{
 
     public static void main(String[] args) throws IOException {
         //Criando servidor: 
+
+        System.out.println("Inicio metodo main");
    
         ServerSocket serverSocket = new ServerSocket(PORTA);
 
@@ -22,47 +24,76 @@ public class Server{
             System.out.println("Erro na inicialização do servidor");
             System.out.println("Erro: " + e.getMessage());
             return;
-        }                
-        
-        // Após muitos tentivas e erros, pedimos ajudas ao ChatGPT,
-        // onde ele recomendou o uso de velotes visto que são multiplas conexões
+        }
 
-        Socket[] socketClient = new Socket[MAXIMO_JOGADERES];
+
+        // Após muitas tentivas e erros, pedimos ajudas ao ChatGPT,
+        // onde ele recomendou o uso de velotes visto que são multiplas conexões
+        Socket[] socketsClient = new Socket[MAXIMO_JOGADERES];
         PrintWriter[] saidasDados = new PrintWriter[MAXIMO_JOGADERES];
         BufferedReader[] leiturasDados = new BufferedReader[MAXIMO_JOGADERES];
+        int clientesConectadosMultiplayer = 0;
 
-        // Um laço de repetição que espera até que o número máximo de jogadores se conecte
-        int clienteConectados = 0;
-        while(clienteConectados < MAXIMO_JOGADERES){
-            try {
-            //No cliente se conecta ao servidor     
+        while(true) {
             Socket clienteNovo = serverSocket.accept();
+            PrintWriter saidaDados = new PrintWriter(clienteNovo.getOutputStream(), true);
+            BufferedReader leituraDados = new BufferedReader(new InputStreamReader(clienteNovo.getInputStream()));
 
-            //incluimos o novo cliente que aceitou no vetor de clientes
-            socketClient[clienteConectados] = clienteNovo;
-            
-            /* As PrintWriter e BufferedReader são respectivamente, classes para escrita e leitura de dados
-            * via console ou arquivos. Nessa aplicação vamos usar interação via console 
-            * carregando nos vetores de saida e leitura de dados dos jogadores */ 
+            saidaDados.println("***Bem vindo ao jogo Pedra, Papel e Teoura!***\n");
 
-            saidasDados[clienteConectados] = new PrintWriter(clienteNovo.getOutputStream(), true);
-            leiturasDados[clienteConectados] = new BufferedReader(new InputStreamReader(clienteNovo.getInputStream()));
+            int escolhaClient = -1;
+            while(true) {
+                saidaDados.println("Você gostaria de jogar contra a máquina, ou contra um jogador?\n0 -> máquina\n1 -> jogador");
+                saidaDados.println("Escolha:");
 
-            System.out.println("Jogador " + (clienteConectados + 1) + " se conectou.");
-            clienteConectados++;
-
-            }catch (Exception e) {
-                System.out.println("Erro na conexão dos clientes ao servidor");
+                try {
+                    escolhaClient = Integer.parseInt(leituraDados.readLine());
+                } catch (IOException e) {
+                    System.out.println("Jogador digitou uma escolha inválida.");
+                }
+                if (escolhaClient < 0 || escolhaClient > 1) {
+                    saidaDados.println("\nEscolha inválida, tente novamente.\n");
+                }
+                else {
+                    break;
+                }
             }
-        } 
 
-        /*Criamos a Thread responsavel pelo controle do jogo
-        * nessa passamos os parametros dos clientes carregados nós vetores*/
+            if (escolhaClient == 0) {
+                System.out.println("Carregando jogo singleplayer...");
+                Jogo jogo = new Jogo(clienteNovo, saidaDados, leituraDados);
+                jogo.run();
+            }
+            
+            else if (escolhaClient == 1) {
+                // Um laço de repetição que espera até que o número máximo de jogadores se conecte
+                try {
+                    //incluimos o novo cliente que aceitou no vetor de clientes
+                    socketsClient[clientesConectadosMultiplayer] = clienteNovo;
+                    
+                    /* As PrintWriter e BufferedReader são respectivamente, classes para escrita e leitura de dados
+                    * via console ou arquivos. Nessa aplicação vamos usar interação via console 
+                    * carregando nos vetores de saida e leitura de dados dos jogadores */ 
+                    saidasDados[clientesConectadosMultiplayer] = saidaDados;
+                    leiturasDados[clientesConectadosMultiplayer] = leituraDados;
 
-        System.out.println("Carregando jogo...");
-        Jogo jogo = new Jogo(socketClient, saidasDados, leiturasDados);
-        jogo.run();
-        
+                    clientesConectadosMultiplayer++;
+                }catch (Exception e) {
+                    System.out.println("Erro na conexão dos clientes ao servidor");
+                }
+
+                /*Criamos a Thread responsavel pelo controle do jogo
+                * nessa passamos os parametros dos clientes carregados nós vetores*/
+                if (clientesConectadosMultiplayer == MAXIMO_JOGADERES) {
+                    System.out.println(socketsClient[0]);
+                    System.out.println(saidasDados[0]);
+                    System.out.println(leiturasDados[0]);
+                    System.out.println("Carregando jogo multiplayer...");
+                    Jogo jogo = new Jogo(socketsClient, saidasDados, leiturasDados);
+                    jogo.run();
+                }
+            }
+        }
         
     }
 }

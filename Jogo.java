@@ -2,12 +2,16 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Random;
 
 public class Jogo implements Runnable {
 
-    private Socket[] socketClient;
+    private Socket[] socketsClient;
     private PrintWriter[] saidasDados;
     private BufferedReader[] leiturasDados;
+    private Socket socketClient;
+    private PrintWriter saidaDados;
+    private BufferedReader leituraDados;
     
 
     /*Dentro do nosso jogo temos:
@@ -18,8 +22,21 @@ public class Jogo implements Runnable {
     */  
     private static int[][] COMBI_VENCEDORAS = {{0, 2}, {1, 0}, {2, 1}};
     private static int MAXIMO_JOGADERES= 2;
+    private static int PLACAR[] = new int[2];
 
-    // Aqui se concentra o nucleu principal da lógica do jogo
+    //Construtores com os parametros coletados da classe servidor:
+    public Jogo(Socket[] socketsClient, PrintWriter[] saidasDados, BufferedReader[] leiturasDados) {
+        this.socketsClient = socketsClient;
+        this.saidasDados = saidasDados;
+        this.leiturasDados = leiturasDados;
+    }
+    public Jogo(Socket socketClient, PrintWriter saidaDados, BufferedReader leituraDados) {
+        this.socketClient = socketClient;
+        this.saidaDados = saidaDados;
+        this.leituraDados = leituraDados;
+    }
+
+    // Aqui se concentra o nucleo principal da lógica do jogo
     
     private static int getResultado(int escolhasClient1 , int escolhasClient2) {
         //Se as escolhas forem igual resulta em empate
@@ -32,9 +49,11 @@ public class Jogo implements Runnable {
             for (int[] verificarCombi : COMBI_VENCEDORAS) {
 
                 if (verificarCombi[0] == escolhasClient1 && verificarCombi[1] == escolhasClient2) {
+                    PLACAR[0]++;
                     return 0;
 
                 } else if (verificarCombi[0] == escolhasClient2 && verificarCombi[1] == escolhasClient1) {
+                    PLACAR[1]++;
                     return 1;
                 }
             }
@@ -42,70 +61,108 @@ public class Jogo implements Runnable {
         }
     }
 
-    // Embaixo pegamos as escolhas dos clientes: 
-    
-    //Construtor com os parametos coletados da classe servidor:
-    public Jogo(Socket[] socketClient, PrintWriter[] saidasDados, BufferedReader[] leiturasDados) {
-        this.socketClient = socketClient;
-        this.saidasDados = saidasDados;
-        this.leiturasDados = leiturasDados;
+    private static boolean getValidade(int[] numeros, int escolhaClient) {
+        if (escolhaClient < numeros[0] || escolhaClient > numeros[1]) {
+            return false;
+        }
+        return true;
     }
-
+    
     @Override
     public void run() {
-
-        for (int i = 0; i < MAXIMO_JOGADERES; i++) {
-            saidasDados[i].println("***Bem vindo ao jogo Pedra, Papel e Teoura***");
-            saidasDados[i].println("Escolhas sua opção: \n 0 -> pedra \n 1 -> papel \n 2 -> tesoura ");
-        }
-   
-        while (true) {
-            int[] escolhasClient = new int[MAXIMO_JOGADERES];
-
+        if (socketClient == null && saidaDados == null && leituraDados == null) {
             
-
-            // Recebe as escolhas dos jogadores
+            //Identificar jogadores ---
             for (int i = 0; i < MAXIMO_JOGADERES; i++) {
-                saidasDados[i].println("Sua vez de jogar. Digite:");
-                try {
-                    escolhasClient[i] = Integer.parseInt(leiturasDados[i].readLine());
-                } catch (IOException e) {
-                    System.out.println("Jogador " + (i + 1) + " digitou uma escolha inválida.");
-                    escolhasClient[i] = -1;
+                saidasDados[i].println(" ");
+                saidasDados[i].println(" Você é jogador " + (i + 1));
+                saidasDados[i].println("--------------------------------  ");
+            } 
+            
+            while (true) {
+                int[] escolhasClient = new int[MAXIMO_JOGADERES];
+                // Recebe as escolhas dos jogadores
+                for (int i = 0; i < MAXIMO_JOGADERES; i++) {
+                    saidasDados[i].println(" ");                    
+
+                    saidasDados[i].println("Escolhas sua opção: \n 0 -> pedra \n 1 -> papel \n 2 -> tesoura ");
+                    saidasDados[i].println("Sua vez de jogar. Escolha:");
+                    try {
+                        escolhasClient[i] = Integer.parseInt(leiturasDados[i].readLine());
+                    } catch (IOException e) {
+                        System.out.println("Jogador " + (i + 1) + " digitou uma escolha inválida.");
+                        escolhasClient[i] = -1;
+                    }
                 }
-            }
-
-            // Verifica se as escolhas dos jogadores são válidas
-            boolean escolhaInvalida = false;
-            for (int i = 0; i < MAXIMO_JOGADERES; i++) {
-                if (escolhasClient[i] < 0 || escolhasClient[i] > 2) {
-                    saidasDados[i].println("Escolha inválida. Tente novamente.");
-                    escolhaInvalida = true;
-                }
-            }
-
-            // Se alguma escolha for inválida, pula para a próxima rodada
-            if (escolhaInvalida) {
-                continue;
-            }
-
-            // Calcula o resultado do jogo
-            int resultado = getResultado(escolhasClient[0], escolhasClient[1]);
-            String saidaResultado = "";
-            if (resultado == -1) {
-              
-                saidaResultado = "Empate!";
-                } else {
-                
-                saidaResultado = "Jogador " + (resultado + 1) + " venceu!";
-                }
-
-        // Envia a String do resultado do jogo para cada jogador
-        for (int i = 0; i < MAXIMO_JOGADERES; i++) {
-            saidasDados[i].println(saidaResultado);
-        }
-      }
-    }
-
     
-}
+                // Verifica se as escolhas dos jogadores são válidas
+                boolean verificar = false;
+                for (int i = 0; i < MAXIMO_JOGADERES; i++) {
+                    verificar = getValidade(new int[] {0, 2}, escolhasClient[i]);
+                }
+                // Se alguma escolha for inválida, pula para a próxima rodada
+                if (!verificar) {
+                    continue;
+                }
+    
+                // Calcula o resultado do jogo
+                int resultado = getResultado(escolhasClient[0], escolhasClient[1]);
+                String saidaResultado = "";
+                if (resultado == -1) {
+                    saidaResultado = "Empate!";
+                } else {
+                    saidaResultado = "Jogador " + (resultado + 1) + " venceu!";
+
+                }
+    
+                // Envia a String do resultado do jogo para cada jogador
+                for (int i = 0; i < MAXIMO_JOGADERES; i++) {
+                    saidasDados[i].println(saidaResultado);
+                    saidasDados[i].println(" ");
+                    saidasDados[i].println("-------------------------------");
+                    saidasDados[i].println("Placar de pontos: \nJogador 1 : " + PLACAR[0] + "\nJogador 2 : " + PLACAR[1]);
+                    saidasDados[i].println(" ");
+                }
+            }
+        }
+        //Logica do metodos 
+        else if (socketsClient == null && saidasDados == null && leiturasDados == null) {
+            while(true) {
+                saidaDados.println("Escolhas sua opção: \n 0 -> pedra \n 1 -> papel \n 2 -> tesoura ");
+                saidaDados.println("Sua vez de jogar. Escolha:");
+                int escolhaClient = -1;
+                try {
+                    escolhaClient = Integer.parseInt(leituraDados.readLine());
+                } catch (IOException e) {
+                    System.out.println("Jogador 0 digitou uma escolha inválida.");
+                }
+
+                // Verifica se as escolhas dos jogadores são válidas
+                boolean flag = getValidade(new int[] {0, 2}, escolhaClient);
+                // Se alguma escolha for inválida, pula para a próxima rodada
+                if (!flag) {
+                    continue;
+                }
+
+                Random rand = new Random();
+                int num = rand.nextInt(3);
+
+                int resultado = getResultado(escolhaClient, num);
+
+                if (resultado == -1) {
+                    saidaDados.println("Maquina jogou: "+ num);
+                    saidaDados.println("Empate!");
+                    
+                }
+                else if (resultado == 0) {
+                    saidaDados.println("Maquina jogou: "+ num);
+                    saidaDados.println("Você venceu!");
+                }
+                else {
+                    saidaDados.println("Maquina jogou: "+ num);
+                    saidaDados.println("A máquina venceu!");
+                }
+            }
+        }
+        }
+    }
