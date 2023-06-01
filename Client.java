@@ -3,16 +3,24 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Scanner;
 
 public class Client {
-    private static String IP_SERVIDOR = "localhost";
-    private static int PORTA = 1234;
+    
 
     public static void main(String[] args) throws IOException {
     
         try{
-            Socket socketClient = new Socket(IP_SERVIDOR, PORTA);
+            Scanner sc = new Scanner(System.in);
+            
+            System.out.println("Digite a IP do servidor: ");
+            final String IP = sc.nextLine();
 
+            System.out.println("Digite a porta do servidor: ");
+            final int Porta = sc.nextInt();
+
+            Socket socketClient = new Socket(IP, Porta);
+            
             //Saida de dadoss do cliente
             PrintWriter saidasDados = new PrintWriter(socketClient.getOutputStream(), true);
             
